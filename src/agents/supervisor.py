@@ -1,7 +1,7 @@
 """Agente Supervisor y Orquestador del sistema multiagente financiero."""
 
 from typing import Literal
-from langchain_core.messages import SystemMessage
+from langchain_core.messages import AIMessage, SystemMessage
 from pydantic import BaseModel, Field
 
 from src.graph.state import AgentState
@@ -14,8 +14,8 @@ SUPERVISOR_SYSTEM_PROMPT = """Sos el Supervisor y Orquestador de un sistema mult
 Tu función es comprender el requerimiento del usuario y coordinar a los agentes especializados:
 
 1. 'analyst': Si el usuario solicita analizar un activo (técnico, fundamental, noticias, balance, gráfico o si conviene comprar/vender).
-2. 'risk_gate': Si el usuario pregunta por su saldo, cartera, posiciones abiertas o si ya hay una propuesta lista para validar.
-3. 'respond': Si se trata de un saludo, una pregunta conceptual sobre trading o finanzas, o la síntesis final de una consulta ya analizada.
+2. 'risk_gate': Si el usuario pregunta por su saldo, cartera, capital, efectivo o posiciones abiertas en Alpaca, o si hay una propuesta para validar.
+3. 'respond': Si se trata de un saludo, una pregunta conceptual sobre trading o finanzas, o una aclaración general. En este caso, DEBES proveer una respuesta completa y útil en 'response_text'.
 
 Reglas obligatorias:
 - Respondé siempre en español con tono profesional, objetivo y analítico.
@@ -33,6 +33,10 @@ class SupervisorDecision(BaseModel):
     )
     ticker: str | None = Field(default=None, description="Ticker identificado en la consulta si aplica")
     reasoning: str = Field(..., description="Justificación breve de la decisión de enrutamiento")
+    response_text: str | None = Field(
+        default=None,
+        description="Respuesta directa al usuario en español si next_agent es 'respond'.",
+    )
 
 
 def supervisor_node(state: AgentState) -> dict:
@@ -49,8 +53,15 @@ def supervisor_node(state: AgentState) -> dict:
         update: dict = {"next_step": decision.next_agent}
         if decision.ticker:
             update["current_ticker"] = decision.ticker.upper()
+
+        if decision.next_agent == "respond" and decision.response_text:
+            update["messages"] = [AIMessage(content=decision.response_text)]
+
         return update
 
     except Exception as exc:
         logger.error("Error en nodo supervisor: %s. Enrutando a 'respond'.", exc)
-        return {"next_step": "respond"}
+        return {
+            "messages": [AIMessage(content="Entendido. ¿En qué activo o consulta de mercado puedo ayudarte hoy?")],
+            "next_step": "respond",
+        }

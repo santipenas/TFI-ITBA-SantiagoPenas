@@ -17,18 +17,42 @@ logger = get_logger("agents.risk_gatekeeper")
 
 
 def risk_gatekeeper_node(state: AgentState) -> dict:
-    """Nodo de gobernanza: valida reglas duras de riesgo y activa la pausa HITL antes de ejecutar."""
+    """Nodo de gobernanza: valida reglas duras de riesgo, informa sobre la cartera y activa HITL."""
     draft = state.trade_proposal
-    if not draft:
-        logger.info("No hay propuesta de trade pendiente para evaluar en RiskGate.")
-        return {"next_step": "respond"}
 
+    # Caso A: Consulta informativa sobre el saldo o cartera (sin propuesta activa)
+    if not draft:
+        logger.info("Consulta informativa de cartera en RiskGate (sin propuesta de trade activa).")
+        account_obs = get_account_and_positions()
+        if isinstance(account_obs, ToolErrorObservation):
+            msg = f"⚠️ No se pudo conectar con Alpaca Paper Trading: {account_obs.message}"
+        else:
+            acc: AccountSummary = account_obs
+            pos_text = "Sin posiciones abiertas actualmente."
+            if acc.open_positions:
+                pos_lines = [
+                    f"- **{p.symbol}**: {p.qty} acciones ({p.side.upper()}) a ${p.current_price:.2f} (P/L no realizado: ${p.unrealized_pl:,.2f})"
+                    for p in acc.open_positions
+                ]
+                pos_text = "\n".join(pos_lines)
+
+            msg = (
+                f"💼 **Estado Actual de tu Cartera (Alpaca Paper Trading)**:\n\n"
+                f"- **Capital Total (Equity)**: `${acc.equity:,.2f} USD`\n"
+                f"- **Efectivo Disponible (Cash)**: `${acc.cash:,.2f} USD`\n"
+                f"- **Poder de Compra**: `${acc.buying_power:,.2f} USD`\n\n"
+                f"**Posiciones Abiertas**:\n{pos_text}"
+            )
+        return {
+            "messages": [AIMessage(content=msg)],
+            "next_step": "respond",
+        }
+
+    # Caso B: Auditoría de riesgo previa a ejecución de orden
     logger.info("Iniciando auditoría de riesgo para propuesta: %s %s", draft.side, draft.ticker)
 
-    # 1. Obtener estado de cuenta real desde Alpaca Paper
     account_obs = get_account_and_positions()
     if isinstance(account_obs, ToolErrorObservation):
-        # Fallback de seguridad: Si no hay conexión al broker, no se puede autorizar la orden
         msg = f"⚠️ **Operación Detenida por Riesgo**: No se pudo verificar el saldo de la cuenta con Alpaca Paper ({account_obs.message}). Ninguna orden puede autorizarse sin verificación de capital."
         return {
             "messages": [AIMessage(content=msg)],
@@ -39,7 +63,7 @@ def risk_gatekeeper_node(state: AgentState) -> dict:
     account: AccountSummary = account_obs
     risk_profile = state.user_profile.get("risk_profile", "MODERATE")
 
-    # 2. Evaluación con el Motor Determinista de Riesgo (RiskPolicyService)
+    # Evaluación con el Motor Determinista de Riesgo (RiskPolicyService)
     risk_service = RiskPolicyService()
     risk_result = risk_service.evaluate_proposal(draft, account, risk_profile=risk_profile)
 
@@ -58,7 +82,7 @@ def risk_gatekeeper_node(state: AgentState) -> dict:
             "next_step": "respond",
         }
 
-    # 3. Construcción de Propuesta Validada
+    # Construcción de Propuesta Validada
     proposal = ValidatedTradeProposal(
         proposal_id=f"prop_{draft.ticker.lower()}_{uuid.uuid4().hex[:6]}",
         draft=draft,
@@ -68,8 +92,7 @@ def risk_gatekeeper_node(state: AgentState) -> dict:
 
     logger.info("Propuesta aprobada por reglas de riesgo. Activando pausa HITL (interrupt)...")
 
-    # 4. COMPUERTA HUMAN-IN-THE-LOOP (HITL) - Pausa del Grafo
-    # interrupt() pausa la ejecución de LangGraph y expone el payload a la UI
+    # COMPUERTA HUMAN-IN-THE-LOOP (HITL) - Pausa del Grafo
     human_response = interrupt({
         "type": "ORDER_CONFIRMATION_REQUIRED",
         "proposal_id": proposal.proposal_id,
@@ -86,13 +109,11 @@ def risk_gatekeeper_node(state: AgentState) -> dict:
         "environment": "Alpaca Paper Trading (Sandbox)",
     })
 
-    # Al reanudarse el hilo, procesamos la decisión humana:
     action = human_response.get("action", "REJECT").upper() if isinstance(human_response, dict) else "REJECT"
     logger.info("Respuesta humana recibida tras interrupción HITL: %s", action)
 
     if action == "APPROVE":
         proposal.status = "APPROVED"
-        # 5. Ejecución en Alpaca Paper Trading
         exec_service = AlpacaExecutionService()
         receipt = exec_service.execute_order(proposal)
 
@@ -124,7 +145,6 @@ def risk_gatekeeper_node(state: AgentState) -> dict:
         }
 
     else:
-        # El usuario canceló o rechazó la operación
         proposal.status = "REJECTED"
         proposal.human_verdict_reason = human_response.get("reason", "Cancelado por el usuario en interfaz") if isinstance(human_response, dict) else "Cancelado por el usuario"
         msg = f"🛑 **Orden Cancelada por el Usuario**: La operación para {draft.ticker} fue desestimada manualmente. No se envió ninguna orden a Alpaca."

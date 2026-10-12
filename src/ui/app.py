@@ -1,7 +1,15 @@
 """Aplicación principal de usuario en Streamlit: Interfaz Conversacional, Gráficos y HITL."""
 
+import sys
+from pathlib import Path
+
+# Asegurar que la raíz del proyecto esté en sys.path independientemente de cómo se invoque Streamlit
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
 import uuid
-from langchain_core.messages import HumanMessage
+from langchain_core.messages import HumanMessage, AIMessage
 from langgraph.types import Command
 import streamlit as st
 
@@ -12,6 +20,7 @@ from src.tools.market_data import get_historical_candles
 from src.ui.components.charts import create_candlestick_chart
 from src.ui.components.hitl_card import render_hitl_card
 from src.ui.components.portfolio_sidebar import render_portfolio_sidebar
+
 
 # Configuración de página de Streamlit
 st.set_page_config(
@@ -131,10 +140,12 @@ if user_input and not st.session_state.pending_interrupt:
                     interrupt_val = snapshot.tasks[0].interrupts[0].value
                     st.session_state.pending_interrupt = interrupt_val
 
-                # Extraer respuesta del agente
+                # Extraer respuesta del agente (último AIMessage)
                 if res.get("messages"):
-                    last_msg = res["messages"][-1].content
-                    st.session_state.messages.append({"role": "assistant", "content": last_msg})
+                    ai_msgs = [m for m in res["messages"] if isinstance(m, AIMessage) or getattr(m, "type", "") == "ai"]
+                    if ai_msgs:
+                        last_msg = ai_msgs[-1].content
+                        st.session_state.messages.append({"role": "assistant", "content": last_msg})
 
                 if res.get("current_ticker"):
                     st.session_state.last_analyzed_ticker = res["current_ticker"]
