@@ -65,8 +65,16 @@ class Settings(BaseSettings):
 
     # Observabilidad (LangSmith)
     langchain_tracing_v2: bool = Field(default=False, description="Activar trazabilidad LangSmith")
-    langchain_api_key: str | None = Field(default=None, description="API Key de LangSmith")
-    langchain_project: str = Field(default="itba-tfi-financial-agent", description="Proyecto en LangSmith")
+    langchain_api_key: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("LANGCHAIN_API_KEY", "LANGSMITH_API_KEY"),
+        description="API Key de LangSmith",
+    )
+    langchain_project: str = Field(
+        default="itba-tfi-financial-agent",
+        validation_alias=AliasChoices("LANGCHAIN_PROJECT", "LANGSMITH_PROJECT"),
+        description="Proyecto en LangSmith",
+    )
 
     # Rutas de Persistencia
     data_dir: Path = Field(default=Path("data"), description="Directorio de datos locales")
@@ -78,6 +86,18 @@ class Settings(BaseSettings):
         default=Path("data/user_profile.db"),
         description="Ruta de la base de datos de perfiles de usuario",
     )
+
+    def model_post_init(self, __context: object) -> None:
+        """Exportar variables de entorno para LangSmith si la clave está presente."""
+        import os
+
+        if self.langchain_api_key:
+            os.environ["LANGCHAIN_API_KEY"] = self.langchain_api_key
+            os.environ["LANGSMITH_API_KEY"] = self.langchain_api_key
+            os.environ["LANGCHAIN_TRACING_V2"] = "true"
+            os.environ["LANGSMITH_TRACING"] = "true"
+            os.environ["LANGCHAIN_PROJECT"] = self.langchain_project
+            os.environ["LANGCHAIN_ENDPOINT"] = "https://api.smith.langchain.com"
 
 
 # Instancia singleton accesible desde toda la aplicación
