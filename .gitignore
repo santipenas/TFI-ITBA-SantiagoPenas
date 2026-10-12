@@ -41,7 +41,7 @@ coverage.xml
 *.cover
 
 # Data, Checkpoints & SQLite databases
-data/*.db
+data/*.db*
 data/*.sqlite3
 data/*.sqlite
 !data/.gitkeep

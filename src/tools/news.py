@@ -1,6 +1,7 @@
 """Herramienta de búsqueda de noticias financieras y catalizadores mediante Tavily Search."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+
 from tavily import TavilyClient
 
 from src.config import settings
@@ -62,7 +63,7 @@ def get_financial_news(
         provenance = DataProvenance(
             source_name="Tavily Search API",
             data_quality="LIVE",
-            timestamp_utc=datetime.now(timezone.utc).isoformat(),
+            timestamp_utc=datetime.now(UTC).isoformat(),
         )
 
         return FinancialNewsOutput(

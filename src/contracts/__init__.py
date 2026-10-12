@@ -1,21 +1,21 @@
 """Contratos de datos, modelos tipados y esquemas de validación del sistema."""
 
 from src.contracts.models import (
+    AccountSummary,
     DataProvenance,
-    TechnicalIndicators,
-    TechnicalSummaryOutput,
+    FinancialNewsOutput,
     FundamentalRatios,
     NewsArticle,
-    FinancialNewsOutput,
-    AccountSummary,
     PositionItem,
+    TechnicalIndicators,
+    TechnicalSummaryOutput,
     ToolErrorObservation,
 )
 from src.contracts.trade_schemas import (
-    TradeProposalDraft,
-    RiskCheckResult,
-    ValidatedTradeProposal,
     OrderExecutionReceipt,
+    RiskCheckResult,
+    TradeProposalDraft,
+    ValidatedTradeProposal,
 )
 
 __all__ = [

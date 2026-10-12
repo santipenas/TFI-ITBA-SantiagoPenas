@@ -9,18 +9,17 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 import uuid
-from langchain_core.messages import HumanMessage, AIMessage
-from langgraph.types import Command
-import streamlit as st
 
-from src.contracts.trade_schemas import ValidatedTradeProposal
+import streamlit as st
+from langchain_core.messages import AIMessage, HumanMessage
+from langgraph.types import Command
+
 from src.graph.workflow import create_financial_graph
 from src.memory.user_profile_store import UserProfileStore
 from src.tools.market_data import get_historical_candles
 from src.ui.components.charts import create_candlestick_chart
 from src.ui.components.hitl_card import render_hitl_card
 from src.ui.components.portfolio_sidebar import render_portfolio_sidebar
-
 
 # Configuración de página de Streamlit
 st.set_page_config(

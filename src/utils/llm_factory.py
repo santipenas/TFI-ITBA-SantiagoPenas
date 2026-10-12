@@ -1,8 +1,8 @@
 """Fábrica de modelos LLM con soporte de fallback automático acotado (OpenAI <-> Gemini)."""
 
 from langchain_core.language_models.chat_models import BaseChatModel
-from langchain_openai import ChatOpenAI
 from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_openai import ChatOpenAI
 
 from src.config import settings
 from src.utils.logger import get_logger
@@ -55,8 +55,11 @@ def get_chat_model(temperature: float = 0.1) -> BaseChatModel:
     # Configuración de Primary con Fallback
     if primary_provider == "openai":
         if openai_model and gemini_model:
-            logger.info("Configurado OpenAI (%s) como primario con fallback a Gemini (%s).",
-                        settings.openai_model_name, settings.gemini_model_name)
+            logger.info(
+                "Configurado OpenAI (%s) como primario con fallback a Gemini (%s).",
+                settings.openai_model_name,
+                settings.gemini_model_name,
+            )
             return openai_model.with_fallbacks([gemini_model])
         elif openai_model:
             logger.info("Configurado OpenAI (%s) como único modelo disponible.", settings.openai_model_name)
@@ -67,8 +70,11 @@ def get_chat_model(temperature: float = 0.1) -> BaseChatModel:
 
     elif primary_provider == "gemini":
         if gemini_model and openai_model:
-            logger.info("Configurado Gemini (%s) como primario con fallback a OpenAI (%s).",
-                        settings.gemini_model_name, settings.openai_model_name)
+            logger.info(
+                "Configurado Gemini (%s) como primario con fallback a OpenAI (%s).",
+                settings.gemini_model_name,
+                settings.openai_model_name,
+            )
             return gemini_model.with_fallbacks([openai_model])
         elif gemini_model:
             return gemini_model

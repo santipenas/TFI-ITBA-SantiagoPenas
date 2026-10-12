@@ -20,7 +20,9 @@ def render_hitl_card(interrupt_data: dict, on_verdict_callback):
     risk_pct = interrupt_data.get("risk_pct", 0.0)
     pos_val = interrupt_data.get("position_value_usd", 0.0)
 
-    st.warning("⚠️ **ACCIÓN REQUERIDA (Human-in-the-Loop)**: Se ha generado una propuesta de orden pendiente de tu autorización.")
+    st.warning(
+        "⚠️ **ACCIÓN REQUERIDA (Human-in-the-Loop)**: Se ha generado una propuesta de orden pendiente de tu autorización."
+    )
 
     with st.container(border=True):
         st.subheader(f"📝 Propuesta de Operación: {side} {qty} {ticker}")
@@ -34,7 +36,9 @@ def render_hitl_card(interrupt_data: dict, on_verdict_callback):
         col4.write(f"**Riesgo Máximo en USD**: `${risk_usd:,.2f}` ({risk_pct:.2f}% del capital)")
         col5.write(f"**Valor Total de la Posición**: `${pos_val:,.2f} USD`")
 
-        st.info("🔒 **Entorno de Destino**: Alpaca Markets Paper Trading (Simulación Sandbox). Ningún fondo real está en riesgo.")
+        st.info(
+            "🔒 **Entorno de Destino**: Alpaca Markets Paper Trading (Simulación Sandbox). Ningún fondo real está en riesgo."
+        )
 
         btn_col1, btn_col2 = st.columns(2)
         if btn_col1.button("✅ APROBAR Y ENVIAR AL BROKER", type="primary", use_container_width=True):

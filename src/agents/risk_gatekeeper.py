@@ -1,11 +1,11 @@
 """Agente de Control de Riesgo, Gobernanza y Compuerta Human-in-the-Loop (HITL)."""
 
-from datetime import datetime, timezone
 import uuid
+
 from langchain_core.messages import AIMessage
 from langgraph.types import interrupt
 
-from src.contracts.models import AccountSummary, DataProvenance, ToolErrorObservation
+from src.contracts.models import AccountSummary, ToolErrorObservation
 from src.contracts.trade_schemas import ValidatedTradeProposal
 from src.graph.state import AgentState
 from src.services.alpaca_execution_service import AlpacaExecutionService
@@ -93,21 +93,23 @@ def risk_gatekeeper_node(state: AgentState) -> dict:
     logger.info("Propuesta aprobada por reglas de riesgo. Activando pausa HITL (interrupt)...")
 
     # COMPUERTA HUMAN-IN-THE-LOOP (HITL) - Pausa del Grafo
-    human_response = interrupt({
-        "type": "ORDER_CONFIRMATION_REQUIRED",
-        "proposal_id": proposal.proposal_id,
-        "ticker": draft.ticker,
-        "side": draft.side,
-        "qty": risk_result.adjusted_qty,
-        "entry_price": draft.suggested_entry_price,
-        "stop_loss": draft.suggested_stop_loss,
-        "take_profit": draft.suggested_take_profit,
-        "risk_usd": risk_result.max_risk_amount_usd,
-        "risk_pct": risk_result.risk_percentage_equity,
-        "position_value_usd": risk_result.position_value_usd,
-        "account_equity": account.equity,
-        "environment": "Alpaca Paper Trading (Sandbox)",
-    })
+    human_response = interrupt(
+        {
+            "type": "ORDER_CONFIRMATION_REQUIRED",
+            "proposal_id": proposal.proposal_id,
+            "ticker": draft.ticker,
+            "side": draft.side,
+            "qty": risk_result.adjusted_qty,
+            "entry_price": draft.suggested_entry_price,
+            "stop_loss": draft.suggested_stop_loss,
+            "take_profit": draft.suggested_take_profit,
+            "risk_usd": risk_result.max_risk_amount_usd,
+            "risk_pct": risk_result.risk_percentage_equity,
+            "position_value_usd": risk_result.position_value_usd,
+            "account_equity": account.equity,
+            "environment": "Alpaca Paper Trading (Sandbox)",
+        }
+    )
 
     action = human_response.get("action", "REJECT").upper() if isinstance(human_response, dict) else "REJECT"
     logger.info("Respuesta humana recibida tras interrupción HITL: %s", action)
@@ -146,7 +148,11 @@ def risk_gatekeeper_node(state: AgentState) -> dict:
 
     else:
         proposal.status = "REJECTED"
-        proposal.human_verdict_reason = human_response.get("reason", "Cancelado por el usuario en interfaz") if isinstance(human_response, dict) else "Cancelado por el usuario"
+        proposal.human_verdict_reason = (
+            human_response.get("reason", "Cancelado por el usuario en interfaz")
+            if isinstance(human_response, dict)
+            else "Cancelado por el usuario"
+        )
         msg = f"🛑 **Orden Cancelada por el Usuario**: La operación para {draft.ticker} fue desestimada manualmente. No se envió ninguna orden a Alpaca."
         return {
             "messages": [AIMessage(content=msg)],

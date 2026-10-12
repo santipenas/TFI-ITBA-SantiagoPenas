@@ -1,8 +1,9 @@
 """Servicio determinista de validación de reglas de riesgo y dimensionamiento de posición."""
 
 from math import floor
-from src.contracts.trade_schemas import TradeProposalDraft, RiskCheckResult
+
 from src.contracts.models import AccountSummary
+from src.contracts.trade_schemas import RiskCheckResult, TradeProposalDraft
 from src.utils.logger import get_logger
 
 logger = get_logger("services.risk_policy")
@@ -13,10 +14,10 @@ class RiskPolicyService:
 
     def __init__(
         self,
-        default_max_risk_pct: float = 0.02,     # 2% máximo por trade
+        default_max_risk_pct: float = 0.02,  # 2% máximo por trade
         max_position_equity_pct: float = 0.10,  # 10% máximo por activo (concentración)
-        min_sl_distance_pct: float = 0.005,     # 0.5% distancia mínima al SL
-        min_risk_reward_ratio: float = 1.5,     # Ratio 1.5:1 mínimo
+        min_sl_distance_pct: float = 0.005,  # 0.5% distancia mínima al SL
+        min_risk_reward_ratio: float = 1.5,  # Ratio 1.5:1 mínimo
     ):
         self.default_max_risk_pct = default_max_risk_pct
         self.max_position_equity_pct = max_position_equity_pct
@@ -66,7 +67,9 @@ class RiskPolicyService:
                 rejection_reasons=rejection_reasons,
             )
 
-        entry_price = draft.limit_price if (draft.order_type == "limit" and draft.limit_price) else draft.suggested_entry_price
+        entry_price = (
+            draft.limit_price if (draft.order_type == "limit" and draft.limit_price) else draft.suggested_entry_price
+        )
         sl_price = draft.suggested_stop_loss
         tp_price = draft.suggested_take_profit
 

@@ -1,10 +1,10 @@
 """Definición y compilación del flujo multiagente (StateGraph) con LangGraph."""
 
-from langgraph.graph import StateGraph, START, END
+from langgraph.graph import END, START, StateGraph
 
-from src.agents.supervisor import supervisor_node
 from src.agents.market_analyst import market_analyst_node
 from src.agents.risk_gatekeeper import risk_gatekeeper_node
+from src.agents.supervisor import supervisor_node
 from src.graph.checkpointer import get_checkpointer
 from src.graph.state import AgentState
 from src.utils.logger import get_logger

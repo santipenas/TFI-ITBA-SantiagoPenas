@@ -19,7 +19,7 @@ def render_portfolio_sidebar():
     st.sidebar.subheader("⚙️ Parámetros de Inversión")
     risk_options = ["CONSERVATIVE", "MODERATE", "AGGRESSIVE"]
     current_idx = risk_options.index(user_profile.get("risk_profile", "MODERATE"))
-    
+
     selected_risk = st.sidebar.selectbox(
         "Perfil de Riesgo",
         options=risk_options,
@@ -55,12 +55,14 @@ def render_portfolio_sidebar():
         if account_data.open_positions:
             pos_records = []
             for p in account_data.open_positions:
-                pos_records.append({
-                    "Activo": p.symbol,
-                    "Cant.": p.qty,
-                    "Precio": f"${p.current_price:.2f}",
-                    "P/L ($)": f"${p.unrealized_pl:.2f}",
-                })
+                pos_records.append(
+                    {
+                        "Activo": p.symbol,
+                        "Cant.": p.qty,
+                        "Precio": f"${p.current_price:.2f}",
+                        "P/L ($)": f"${p.unrealized_pl:.2f}",
+                    }
+                )
             df_pos = pd.DataFrame(pos_records)
             st.sidebar.dataframe(df_pos, hide_index=True, use_container_width=True)
         else:

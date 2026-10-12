@@ -1,19 +1,20 @@
 """Tests unitarios para las herramientas financieras y brokers con mocks."""
 
 from unittest.mock import MagicMock, patch
+
 import pandas as pd
 
-from src.tools.market_data import get_stock_technical_summary
-from src.tools.fundamentals import get_company_fundamentals
-from src.tools.news import get_financial_news
-from src.tools.alpaca_broker import get_account_and_positions
 from src.contracts.models import (
-    TechnicalSummaryOutput,
-    FundamentalRatios,
-    FinancialNewsOutput,
     AccountSummary,
+    FinancialNewsOutput,
+    FundamentalRatios,
+    TechnicalSummaryOutput,
     ToolErrorObservation,
 )
+from src.tools.alpaca_broker import get_account_and_positions
+from src.tools.fundamentals import get_company_fundamentals
+from src.tools.market_data import get_stock_technical_summary
+from src.tools.news import get_financial_news
 
 
 def test_get_stock_technical_summary_insufficient_data():
@@ -94,8 +95,10 @@ def test_get_financial_news_success():
         ]
     }
 
-    with patch("src.config.settings.tavily_api_key", "mock_tavily_key"), \
-         patch("src.tools.news.TavilyClient") as mock_client_cls:
+    with (
+        patch("src.config.settings.tavily_api_key", "mock_tavily_key"),
+        patch("src.tools.news.TavilyClient") as mock_client_cls,
+    ):
         mock_instance = MagicMock()
         mock_instance.search.return_value = mock_tavily_resp
         mock_client_cls.return_value = mock_instance

@@ -3,6 +3,7 @@
 import logging
 import re
 import sys
+
 from src.config import settings
 
 # Patrones para detectar y enmascarar posibles claves de API en logs

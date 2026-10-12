@@ -1,6 +1,7 @@
 """Herramienta de consulta de estado de cuenta y posiciones en Alpaca Paper Trading."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+
 from alpaca.trading.client import TradingClient
 
 from src.config import settings
@@ -58,7 +59,7 @@ def get_account_and_positions() -> AccountSummary | ToolErrorObservation:
         provenance = DataProvenance(
             source_name="Alpaca Paper Trading API",
             data_quality="LIVE",
-            timestamp_utc=datetime.now(timezone.utc).isoformat(),
+            timestamp_utc=datetime.now(UTC).isoformat(),
         )
 
         return AccountSummary(

@@ -2,7 +2,8 @@
 
 import pytest
 from pydantic import ValidationError
-from src.contracts.trade_schemas import TradeProposalDraft, RiskCheckResult, ValidatedTradeProposal
+
+from src.contracts.trade_schemas import RiskCheckResult, TradeProposalDraft, ValidatedTradeProposal
 
 
 def test_valid_long_trade_proposal_draft():

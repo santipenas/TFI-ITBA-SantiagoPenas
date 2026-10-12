@@ -1,6 +1,7 @@
 """Herramienta de análisis fundamental usando Financial Modeling Prep (FMP) y fallback a yfinance."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+
 import requests
 import yfinance as yf
 
@@ -38,7 +39,7 @@ def get_company_fundamentals(ticker: str) -> FundamentalRatios | ToolErrorObserv
                 data = response.json()
                 if isinstance(data, list) and len(data) > 0:
                     ratios = data[0]
-                    
+
                     # Consulta complementaria de métricas clave (Market Cap y PE)
                     metrics_url = f"https://financialmodelingprep.com/api/v3/key-metrics-ttm/{clean_ticker}?apikey={settings.fmp_api_key}"
                     metrics_resp = requests.get(metrics_url, timeout=8)
@@ -57,7 +58,7 @@ def get_company_fundamentals(ticker: str) -> FundamentalRatios | ToolErrorObserv
                         provenance=DataProvenance(
                             source_name="Financial Modeling Prep (FMP)",
                             data_quality="LIVE",
-                            timestamp_utc=datetime.now(timezone.utc).isoformat(),
+                            timestamp_utc=datetime.now(UTC).isoformat(),
                         ),
                     )
             elif response.status_code == 429:
@@ -91,7 +92,7 @@ def get_company_fundamentals(ticker: str) -> FundamentalRatios | ToolErrorObserv
             provenance=DataProvenance(
                 source_name="Yahoo Finance (Fallback)",
                 data_quality="DELAYED_15M",
-                timestamp_utc=datetime.now(timezone.utc).isoformat(),
+                timestamp_utc=datetime.now(UTC).isoformat(),
             ),
         )
 

@@ -1,7 +1,7 @@
 """Servicio de ejecución de órdenes en Alpaca Paper Trading con soporte de bracket orders e idempotencia."""
 
-from datetime import datetime, timezone
 import uuid
+from datetime import UTC, datetime
 
 from alpaca.trading.client import TradingClient
 from alpaca.trading.enums import OrderClass, OrderSide, TimeInForce
@@ -42,7 +42,7 @@ class AlpacaExecutionService:
                 qty=qty,
                 order_type=draft.order_type,
                 status="rejected",
-                submitted_at_utc=datetime.now(timezone.utc).isoformat(),
+                submitted_at_utc=datetime.now(UTC).isoformat(),
                 error_message="Cliente de Alpaca Paper Trading no inicializado o sin credenciales válidas.",
             )
 
@@ -78,8 +78,14 @@ class AlpacaExecutionService:
                     client_order_id=client_order_id,
                 )
 
-            logger.info("Enviando orden a Alpaca Paper: %s %d %s (SL: %.2f, TP: %.2f)",
-                        draft.side, qty, draft.ticker, draft.suggested_stop_loss, draft.suggested_take_profit)
+            logger.info(
+                "Enviando orden a Alpaca Paper: %s %d %s (SL: %.2f, TP: %.2f)",
+                draft.side,
+                qty,
+                draft.ticker,
+                draft.suggested_stop_loss,
+                draft.suggested_take_profit,
+            )
 
             order = self.client.submit_order(order_data=order_req)
 
@@ -92,7 +98,7 @@ class AlpacaExecutionService:
                 qty=qty,
                 order_type=draft.order_type,
                 status=str(order.status.value) if hasattr(order.status, "value") else str(order.status),
-                submitted_at_utc=datetime.now(timezone.utc).isoformat(),
+                submitted_at_utc=datetime.now(UTC).isoformat(),
             )
 
         except Exception as exc:
@@ -105,6 +111,6 @@ class AlpacaExecutionService:
                 qty=qty,
                 order_type=draft.order_type,
                 status="broker_error",
-                submitted_at_utc=datetime.now(timezone.utc).isoformat(),
+                submitted_at_utc=datetime.now(UTC).isoformat(),
                 error_message=f"Error retornado por Alpaca Paper: {str(exc)}",
             )

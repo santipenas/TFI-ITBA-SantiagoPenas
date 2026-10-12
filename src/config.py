@@ -5,7 +5,8 @@ Carga variables de entorno desde .env de forma tipada, segura y con validaciones
 
 from pathlib import Path
 from typing import Literal
-from pydantic import Field, AliasChoices
+
+from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 

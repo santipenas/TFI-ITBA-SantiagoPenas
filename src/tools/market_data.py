@@ -1,6 +1,7 @@
 """Herramienta de análisis técnico y precios de mercado usando yfinance y pandas-ta localmente."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+
 import pandas as pd
 import pandas_ta as ta
 import yfinance as yf
@@ -72,9 +73,17 @@ def get_stock_technical_summary(
         sma_50_series = ta.sma(close, length=50) if len(df) >= 50 else None
         sma_200_series = ta.sma(close, length=200) if len(df) >= 200 else None
 
-        sma_20 = float(sma_20_series.iloc[-1]) if sma_20_series is not None and not pd.isna(sma_20_series.iloc[-1]) else None
-        sma_50 = float(sma_50_series.iloc[-1]) if sma_50_series is not None and not pd.isna(sma_50_series.iloc[-1]) else None
-        sma_200 = float(sma_200_series.iloc[-1]) if sma_200_series is not None and not pd.isna(sma_200_series.iloc[-1]) else None
+        sma_20 = (
+            float(sma_20_series.iloc[-1]) if sma_20_series is not None and not pd.isna(sma_20_series.iloc[-1]) else None
+        )
+        sma_50 = (
+            float(sma_50_series.iloc[-1]) if sma_50_series is not None and not pd.isna(sma_50_series.iloc[-1]) else None
+        )
+        sma_200 = (
+            float(sma_200_series.iloc[-1])
+            if sma_200_series is not None and not pd.isna(sma_200_series.iloc[-1])
+            else None
+        )
 
         # 2. RSI (14)
         rsi_series = ta.rsi(close, length=14)
@@ -111,7 +120,7 @@ def get_stock_technical_summary(
         provenance = DataProvenance(
             source_name="yfinance + pandas-ta (local)",
             data_quality="LIVE",
-            timestamp_utc=datetime.now(timezone.utc).isoformat(),
+            timestamp_utc=datetime.now(UTC).isoformat(),
             currency="USD",
         )
 

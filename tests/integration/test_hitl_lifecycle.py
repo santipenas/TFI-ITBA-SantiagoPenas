@@ -1,6 +1,8 @@
 """Tests de integración para el ciclo de vida Human-in-the-Loop (HITL) en LangGraph."""
 
+from datetime import UTC
 from unittest.mock import patch
+
 from langgraph.checkpoint.memory import MemorySaver
 
 from src.contracts.models import AccountSummary, DataProvenance
@@ -9,7 +11,8 @@ from src.graph.workflow import create_financial_graph
 
 
 def _mock_account() -> AccountSummary:
-    from datetime import datetime, timezone
+    from datetime import datetime
+
     return AccountSummary(
         equity=50000.0,
         cash=40000.0,
@@ -20,7 +23,7 @@ def _mock_account() -> AccountSummary:
         provenance=DataProvenance(
             source_name="Mock Alpaca",
             data_quality="LIVE",
-            timestamp_utc=datetime.now(timezone.utc).isoformat(),
+            timestamp_utc=datetime.now(UTC).isoformat(),
         ),
     )
 
@@ -48,11 +51,14 @@ def test_hitl_pause_and_approve_lifecycle():
     config = {"configurable": {"thread_id": "test_thread_approve"}}
 
     # Parcheamos las referencias en workflow para aislar completamente el flujo de estados
-    with patch("src.graph.workflow.supervisor_node", return_value={"next_step": "analyst", "current_ticker": "AAPL"}), \
-         patch("src.graph.workflow.market_analyst_node", return_value={"trade_proposal": draft, "next_step": "risk_gate"}), \
-         patch("src.agents.risk_gatekeeper.get_account_and_positions", return_value=_mock_account()), \
-         patch("src.services.alpaca_execution_service.AlpacaExecutionService.execute_order") as mock_exec:
-
+    with (
+        patch("src.graph.workflow.supervisor_node", return_value={"next_step": "analyst", "current_ticker": "AAPL"}),
+        patch(
+            "src.graph.workflow.market_analyst_node", return_value={"trade_proposal": draft, "next_step": "risk_gate"}
+        ),
+        patch("src.agents.risk_gatekeeper.get_account_and_positions", return_value=_mock_account()),
+        patch("src.services.alpaca_execution_service.AlpacaExecutionService.execute_order") as mock_exec,
+    ):
         graph = create_financial_graph(checkpointer=checkpointer)
 
         mock_exec.return_value = OrderExecutionReceipt(
@@ -68,7 +74,7 @@ def test_hitl_pause_and_approve_lifecycle():
         )
 
         # 1. Iniciar ejecución: Debe avanzar hasta risk_gate y PAUSAR en interrupt()
-        res = graph.invoke(initial_state, config=config)
+        _ = graph.invoke(initial_state, config=config)
 
         # Verificar que el grafo está en pausa con la interrupción activa
         state_snapshot = graph.get_state(config)
@@ -79,6 +85,7 @@ def test_hitl_pause_and_approve_lifecycle():
 
         # 2. Reanudar con aprobación del usuario
         from langgraph.types import Command
+
         res_approved = graph.invoke(
             Command(resume={"action": "APPROVE"}),
             config=config,
@@ -112,11 +119,14 @@ def test_hitl_pause_and_reject_lifecycle():
 
     config = {"configurable": {"thread_id": "test_thread_reject"}}
 
-    with patch("src.graph.workflow.supervisor_node", return_value={"next_step": "analyst", "current_ticker": "NVDA"}), \
-         patch("src.graph.workflow.market_analyst_node", return_value={"trade_proposal": draft, "next_step": "risk_gate"}), \
-         patch("src.agents.risk_gatekeeper.get_account_and_positions", return_value=_mock_account()), \
-         patch("src.services.alpaca_execution_service.AlpacaExecutionService.execute_order") as mock_exec:
-
+    with (
+        patch("src.graph.workflow.supervisor_node", return_value={"next_step": "analyst", "current_ticker": "NVDA"}),
+        patch(
+            "src.graph.workflow.market_analyst_node", return_value={"trade_proposal": draft, "next_step": "risk_gate"}
+        ),
+        patch("src.agents.risk_gatekeeper.get_account_and_positions", return_value=_mock_account()),
+        patch("src.services.alpaca_execution_service.AlpacaExecutionService.execute_order") as mock_exec,
+    ):
         graph = create_financial_graph(checkpointer=checkpointer)
 
         # 1. Iniciar ejecución hasta la pausa
@@ -129,6 +139,7 @@ def test_hitl_pause_and_reject_lifecycle():
 
         # 2. Reanudar con rechazo del usuario
         from langgraph.types import Command
+
         res_rejected = graph.invoke(
             Command(resume={"action": "REJECT", "reason": "No me convence la volatilidad del activo"}),
             config=config,

@@ -1,7 +1,8 @@
 """Modelos de datos generales, observaciones de herramientas y trazabilidad de proveniencia."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Literal
+
 from pydantic import BaseModel, Field
 
 
@@ -14,7 +15,7 @@ class DataProvenance(BaseModel):
         description="Calidad o retraso del dato obtenido",
     )
     timestamp_utc: str = Field(
-        default_factory=lambda: datetime.now(timezone.utc).isoformat(),
+        default_factory=lambda: datetime.now(UTC).isoformat(),
         description="Fecha y hora de captura del dato",
     )
     currency: str = Field(default="USD", description="Moneda de cotización")
@@ -103,6 +104,4 @@ class ToolErrorObservation(BaseModel):
     code: str
     message: str
     retryable: bool = False
-    timestamp_utc: str = Field(
-        default_factory=lambda: datetime.now(timezone.utc).isoformat()
-    )
+    timestamp_utc: str = Field(default_factory=lambda: datetime.now(UTC).isoformat())

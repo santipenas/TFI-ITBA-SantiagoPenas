@@ -1,6 +1,7 @@
 """Tests unitarios para el motor determinista de riesgo (RiskPolicyService)."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+
 from src.contracts.models import AccountSummary, DataProvenance
 from src.contracts.trade_schemas import TradeProposalDraft
 from src.services.risk_policy_service import RiskPolicyService
@@ -17,7 +18,7 @@ def _create_mock_account(equity: float = 100000.0, cash: float = 80000.0, blocke
         provenance=DataProvenance(
             source_name="Mock Account",
             data_quality="LIVE",
-            timestamp_utc=datetime.now(timezone.utc).isoformat(),
+            timestamp_utc=datetime.now(UTC).isoformat(),
         ),
     )
 
@@ -26,7 +27,7 @@ def test_risk_policy_approves_valid_trade():
     """Una orden con SL adecuado y buen ratio R/B debe ser aprobada y dimensionada."""
     service = RiskPolicyService()
     account = _create_mock_account(equity=50000.0, cash=40000.0)
-    
+
     # 2% de 50,000 = 1,000 USD riesgo máximo
     # Entrada = 100, SL = 95 -> Distancia = 5 USD
     # Cantidad calculada = 1000 / 5 = 200 acciones

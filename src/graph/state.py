@@ -1,14 +1,15 @@
 """Definición del estado global del grafo de agentes (LangGraph AgentState)."""
 
 from typing import Annotated, Any
+
 from langchain_core.messages import AnyMessage
 from langgraph.graph.message import add_messages
 from pydantic import BaseModel, Field
 
 from src.contracts.trade_schemas import (
+    OrderExecutionReceipt,
     TradeProposalDraft,
     ValidatedTradeProposal,
-    OrderExecutionReceipt,
 )
 
 
@@ -25,7 +26,9 @@ class AgentState(BaseModel):
     # Propuestas y flujo de gobernanza
     trade_proposal: TradeProposalDraft | None = Field(default=None, description="Borrador generado por el analista")
     validated_proposal: ValidatedTradeProposal | None = Field(default=None, description="Propuesta auditada por riesgo")
-    order_receipt: OrderExecutionReceipt | None = Field(default=None, description="Comprobante de orden ejecutada en Alpaca")
+    order_receipt: OrderExecutionReceipt | None = Field(
+        default=None, description="Comprobante de orden ejecutada en Alpaca"
+    )
 
     # Preferencias del usuario y metadatos de sesión
     user_profile: dict[str, Any] = Field(

@@ -73,8 +73,9 @@ def market_analyst_node(state: AgentState) -> dict:
 
     # Ejecución dinámica de herramientas si el modelo solicitó calls
     if ai_msg.tool_calls:
-        logger.info("El analista solicitó %d herramientas: %s",
-                    len(ai_msg.tool_calls), [tc["name"] for tc in ai_msg.tool_calls])
+        logger.info(
+            "El analista solicitó %d herramientas: %s", len(ai_msg.tool_calls), [tc["name"] for tc in ai_msg.tool_calls]
+        )
         tools_by_name = {t.name: t for t in ANALYST_TOOLS}
 
         for tool_call in ai_msg.tool_calls:
@@ -86,8 +87,9 @@ def market_analyst_node(state: AgentState) -> dict:
                     tool_result = selected_tool.invoke(t_args)
                 except Exception as exc:
                     tool_result = f'{{"status":"error","message":"{str(exc)}"}}'
-                
+
                 from langchain_core.messages import ToolMessage
+
                 messages.append(ToolMessage(content=str(tool_result), tool_call_id=tool_call["id"]))
 
     # Síntesis final estructurada
