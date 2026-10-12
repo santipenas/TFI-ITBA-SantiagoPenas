@@ -1,6 +1,6 @@
 """Agente Analista de Mercado: ejecuta investigación técnica, fundamental y de noticias."""
 
-from langchain_core.messages import AIMessage, SystemMessage
+from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from pydantic import BaseModel, Field
 
 from src.contracts.trade_schemas import TradeProposalDraft
@@ -64,7 +64,7 @@ def market_analyst_node(state: AgentState) -> dict:
     prompt_content = f"Realizá una investigación completa de mercado sobre el activo {ticker}. Consultá los indicadores técnicos, ratios fundamentales y noticias recientes."
     messages = [
         SystemMessage(content=MARKET_ANALYST_SYSTEM_PROMPT),
-        AIMessage(content=prompt_content),
+        HumanMessage(content=prompt_content),
     ]
 
     # Ejecutar primera llamada al modelo para selección de herramientas

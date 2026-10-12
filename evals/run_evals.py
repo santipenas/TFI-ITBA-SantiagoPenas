@@ -5,9 +5,13 @@ de enrutamiento del Supervisor, la detección de tickers, la latencia y genera e
 """
 
 import json
+import sys
 import time
 from datetime import UTC, datetime
 from pathlib import Path
+
+# Asegurar raíz del proyecto en sys.path
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from langchain_core.messages import HumanMessage
 from langgraph.checkpoint.memory import MemorySaver

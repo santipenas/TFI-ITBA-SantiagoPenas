@@ -105,8 +105,8 @@ graph TD
 ### Pasos de Instalación con `uv`
 1. Clonar el repositorio:
    ```bash
-   git clone <URL_DEL_REPOSITORIO>
-   cd TFI
+   git clone https://github.com/santipenas/TFI-ITBA-SantiagoPenas.git
+   cd TFI-ITBA-SantiagoPenas
    ```
 2. Crear el entorno virtual e instalar dependencias fijadas:
    ```bash
@@ -124,13 +124,14 @@ Copiar el archivo de plantilla `.env.example` como `.env`:
 cp .env.example .env
 ```
 Editar `.env` y configurar las credenciales requeridas:
-- `OPENAI_API_KEY`: Tu clave de API de OpenAI.
-- `GEMINI_API_KEY`: Tu clave de API de Google Gemini (para fallback).
-- `ALPACA_API_KEY`: Tu clave de **Paper Trading** de Alpaca.
-- `ALPACA_SECRET_KEY`: Tu clave secreta de **Paper Trading** de Alpaca.
-- `FMP_API_KEY`: Tu clave de Financial Modeling Prep.
-- `TAVILY_API_KEY`: Tu clave de Tavily Search.
-- `LANGCHAIN_API_KEY`: Tu clave de LangSmith (opcional, para trazabilidad).
+- `OPENAI_API_KEY`: Tu clave de API de OpenAI (Proveedor primario).
+- `GEMINI_API_KEY`: Tu clave de API de Google Gemini (Proveedor fallback ante rate-limits).
+- `ALPACA_API_KEY`: Tu clave de **Paper Trading** de Alpaca (Sandbox).
+- `ALPACA_SECRET_KEY`: Tu clave secreta de **Paper Trading** de Alpaca (Sandbox).
+- `FMP_API_KEY`: Tu clave de Financial Modeling Prep (Ratios de solvencia y P/E).
+- `TAVILY_API_KEY`: Tu clave de Tavily Search (Noticias en tiempo real).
+- `LANGCHAIN_API_KEY` o `LANGSMITH_API_KEY`: Tu clave de LangSmith para telemetría y observabilidad en vivo.
+- `LANGCHAIN_PROJECT`: Nombre del proyecto en LangSmith (por defecto `itba-tfi-financial-agent`).
 
 > **IMPORTANTE**: El archivo `.env` está expresamente excluido en `.gitignore` para no exponer secretos en el repositorio.
 
