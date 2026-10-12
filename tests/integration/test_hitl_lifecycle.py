@@ -28,7 +28,6 @@ def _mock_account() -> AccountSummary:
 def test_hitl_pause_and_approve_lifecycle():
     """Verifica que el grafo pause en la compuerta HITL y ejecute la orden tras la aprobación humana."""
     checkpointer = MemorySaver()
-    graph = create_financial_graph(checkpointer=checkpointer)
 
     draft = TradeProposalDraft(
         ticker="AAPL",
@@ -43,15 +42,18 @@ def test_hitl_pause_and_approve_lifecycle():
         "messages": [],
         "current_ticker": "AAPL",
         "trade_proposal": draft,
-        "next_step": "risk_gate",
+        "next_step": "supervisor",
     }
 
     config = {"configurable": {"thread_id": "test_thread_approve"}}
 
-    # Mock del analista para retornar el trade predecible, cuenta de Alpaca y servicio de ejecución
-    with patch("src.agents.market_analyst.market_analyst_node", return_value={"trade_proposal": draft, "next_step": "risk_gate"}), \
+    # Parcheamos las referencias en workflow para aislar completamente el flujo de estados
+    with patch("src.graph.workflow.supervisor_node", return_value={"next_step": "analyst", "current_ticker": "AAPL"}), \
+         patch("src.graph.workflow.market_analyst_node", return_value={"trade_proposal": draft, "next_step": "risk_gate"}), \
          patch("src.agents.risk_gatekeeper.get_account_and_positions", return_value=_mock_account()), \
          patch("src.services.alpaca_execution_service.AlpacaExecutionService.execute_order") as mock_exec:
+
+        graph = create_financial_graph(checkpointer=checkpointer)
 
         mock_exec.return_value = OrderExecutionReceipt(
             success=True,
@@ -91,7 +93,6 @@ def test_hitl_pause_and_approve_lifecycle():
 def test_hitl_pause_and_reject_lifecycle():
     """Verifica que el grafo pause en HITL y cancele la orden sin llamar al broker si el usuario rechaza."""
     checkpointer = MemorySaver()
-    graph = create_financial_graph(checkpointer=checkpointer)
 
     draft = TradeProposalDraft(
         ticker="NVDA",
@@ -106,17 +107,25 @@ def test_hitl_pause_and_reject_lifecycle():
         "messages": [],
         "current_ticker": "NVDA",
         "trade_proposal": draft,
-        "next_step": "risk_gate",
+        "next_step": "supervisor",
     }
 
     config = {"configurable": {"thread_id": "test_thread_reject"}}
 
-    with patch("src.agents.market_analyst.market_analyst_node", return_value={"trade_proposal": draft, "next_step": "risk_gate"}), \
+    with patch("src.graph.workflow.supervisor_node", return_value={"next_step": "analyst", "current_ticker": "NVDA"}), \
+         patch("src.graph.workflow.market_analyst_node", return_value={"trade_proposal": draft, "next_step": "risk_gate"}), \
          patch("src.agents.risk_gatekeeper.get_account_and_positions", return_value=_mock_account()), \
          patch("src.services.alpaca_execution_service.AlpacaExecutionService.execute_order") as mock_exec:
 
+        graph = create_financial_graph(checkpointer=checkpointer)
+
         # 1. Iniciar ejecución hasta la pausa
         graph.invoke(initial_state, config=config)
+
+        # Verificar que efectivamente está pausado en interrupt()
+        state_snapshot = graph.get_state(config)
+        assert len(state_snapshot.tasks) > 0
+        assert state_snapshot.tasks[0].interrupts[0].value["ticker"] == "NVDA"
 
         # 2. Reanudar con rechazo del usuario
         from langgraph.types import Command
