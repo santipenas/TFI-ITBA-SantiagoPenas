@@ -1,0 +1,48 @@
+[project]
+name = "itba-financial-agent"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Santiago Penas", email = "penassantiago@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "alpaca-py>=0.44.0",
+    "langchain>=1.4.4",
+    "langchain-core>=1.6.10",
+    "langchain-google-genai>=4.4.1",
+    "langchain-openai>=1.7.1",
+    "langgraph>=1.2.14",
+    "langgraph-checkpoint-sqlite>=3.1.1",
+    "pandas>=2.3.3",
+    "pandas-ta>=0.4.71b0",
+    "plotly>=7.1.0",
+    "pydantic>=2.14.1",
+    "pydantic-settings>=2.15.0",
+    "python-dotenv>=1.2.4",
+    "requests>=2.34.2",
+    "streamlit>=1.65.0",
+    "tavily-python>=0.8.5",
+    "yfinance>=1.7.0",
+]
+
+[project.scripts]
+itba-financial-agent = "itba_financial_agent:main"
+
+[build-system]
+requires = ["uv_build>=0.12.5,<0.13.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
+    "pytest-mock>=3.16.0",
+    "ruff>=0.17.0",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+
