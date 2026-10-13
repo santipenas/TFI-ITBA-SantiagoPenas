@@ -46,13 +46,20 @@ class FundamentalRatios(BaseModel):
     """Ratios financieros y fundamentales clave de una empresa."""
 
     ticker: str
+    company_name: str | None = None
+    sector: str | None = None
+    industry: str | None = None
     market_cap: float | None = None
     pe_ratio: float | None = None
     forward_pe: float | None = None
     price_to_book: float | None = None
     debt_to_equity: float | None = None
     profit_margins: float | None = None
+    operating_margins: float | None = None
     revenue_growth_yoy: float | None = None
+    beta: float | None = None
+    target_consensus_price: float | None = None
+    dcf_fair_value: float | None = None
     provenance: DataProvenance
 
 

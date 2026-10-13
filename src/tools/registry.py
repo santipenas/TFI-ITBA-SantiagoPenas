@@ -20,9 +20,9 @@ def tool_stock_technical_summary(ticker: str, timeframe: str = "1d", period_days
 
 @tool
 def tool_company_fundamentals(ticker: str) -> str:
-    """Obtiene ratios financieros clave (P/E, deuda sobre patrimonio, márgenes y market cap) de una empresa.
+    """Obtiene ratios financieros y valuación fundamental (P/E, PEG, P/B, deuda, márgenes netos y operativos, crecimiento de ingresos, beta, precio objetivo consensuado de analistas y valor intrínseco por DCF) mediante Financial Modeling Prep (FMP).
 
-    Úsalo para evaluar la solvencia y valuación fundamental del negocio antes de tomar una decisión de inversión.
+    Úsalo para evaluar la solvencia, calidad y valuación intrínseca del negocio antes de tomar una decisión de inversión.
     """
     res = get_company_fundamentals(ticker=ticker)
     return res.model_dump_json()
