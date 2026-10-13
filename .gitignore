@@ -48,7 +48,8 @@ data/*.sqlite
 
 # IDEs & OS
 .idea/
-.vscode/
+.vscode/*
+!.vscode/settings.json
 *.swp
 *.swo
 *~

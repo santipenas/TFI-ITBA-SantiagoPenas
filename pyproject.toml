@@ -57,5 +57,9 @@ ignore = ["E501"]
 [tool.ruff.lint.per-file-ignores]
 "src/ui/app.py" = ["E402"]
 
+[tool.pyright]
+include = ["src", "tests", "evals"]
+extraPaths = ["."]
+
 
 
