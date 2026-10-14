@@ -1,6 +1,8 @@
 """Agente Analista de Mercado: ejecuta investigación técnica, fundamental y de noticias."""
 
-from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
+from typing import cast
+
+from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage, ToolMessage
 from pydantic import BaseModel, Field
 
 from src.contracts.trade_schemas import TradeProposalDraft
@@ -62,7 +64,7 @@ def market_analyst_node(state: AgentState) -> dict:
     agent_with_tools = llm.bind_tools(ANALYST_TOOLS)
 
     prompt_content = f"Realizá una investigación completa de mercado sobre el activo {ticker}. Consultá los indicadores técnicos, ratios fundamentales y noticias recientes."
-    messages = [
+    messages: list[BaseMessage] = [
         SystemMessage(content=MARKET_ANALYST_SYSTEM_PROMPT),
         HumanMessage(content=prompt_content),
     ]
@@ -88,13 +90,11 @@ def market_analyst_node(state: AgentState) -> dict:
                 except Exception as exc:
                     tool_result = f'{{"status":"error","message":"{str(exc)}"}}'
 
-                from langchain_core.messages import ToolMessage
-
                 messages.append(ToolMessage(content=str(tool_result), tool_call_id=tool_call["id"]))
 
     # Síntesis final estructurada
     struct_llm = llm.with_structured_output(AnalystOutputSchema)
-    synthesis: AnalystOutputSchema = struct_llm.invoke(messages)
+    synthesis = cast(AnalystOutputSchema, struct_llm.invoke(messages))
 
     response_messages = [AIMessage(content=synthesis.analysis_markdown)]
 

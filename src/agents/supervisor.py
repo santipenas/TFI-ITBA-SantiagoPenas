@@ -1,6 +1,6 @@
 """Agente Supervisor y Orquestador del sistema multiagente financiero."""
 
-from typing import Literal
+from typing import Literal, cast
 
 from langchain_core.messages import AIMessage, SystemMessage
 from pydantic import BaseModel, Field
@@ -48,7 +48,7 @@ def supervisor_node(state: AgentState) -> dict:
 
     messages = [SystemMessage(content=SUPERVISOR_SYSTEM_PROMPT)] + state.messages
     try:
-        decision: SupervisorDecision = structured_llm.invoke(messages)
+        decision = cast(SupervisorDecision, structured_llm.invoke(messages))
         logger.info(
             "Decisión del Supervisor: %s (Ticker: %s, Motivo: %s)",
             decision.next_agent,
