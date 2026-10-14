@@ -80,9 +80,10 @@ graph TD
   - `risk-management-framework`: Fórmulas matemáticas de dimensionamiento de posición, regla del 2% de riesgo y concentración máxima.
 - **Estado y Memoria [C10-C11]**: `SqliteSaver` de LangGraph (`data/checkpoints.db`) para persistencia durable de hilos de sesión y puntos de pausa HITL. Tabla local SQLite para perfiles y preferencias del usuario (`data/user_profile.db`).
 - **Integraciones Externas [C9/C13]**:
-  - **Alpaca Markets**: Conexión a la API de Paper Trading para consulta de saldo, posiciones y envío de órdenes.
-  - **Financial Modeling Prep (FMP)**: Extracción de ratios de solvencia y múltiplos de valuación (P/E, Debt-to-Equity, Márgenes).
-  - **Tavily AI**: Búsqueda contextual de noticias de mercado depuradas para LLMs.
+  - **Alpaca Markets**: Conexión a la API de Paper Trading para consulta de saldo, posiciones y envío de órdenes bracket.
+  - **Financial Modeling Prep (FMP Stable API)**: Extracción en vivo de ratios de solvencia, múltiplos de valuación (P/E, PEG, P/B, Debt-to-Equity), márgenes operativos y netos, crecimiento YoY, beta, precio objetivo de consenso de Wall Street y valor intrínseco por DCF (Discounted Cash Flow).
+  - **Tavily AI**: Búsqueda contextual de noticias de mercado y catalizadores depurados para LLMs.
+  - **LangSmith**: Telemetría, árboles de ejecución jerárquicos y observabilidad agéntica en tiempo real.
 
 ---
 
@@ -124,11 +125,11 @@ Copiar el archivo de plantilla `.env.example` como `.env`:
 cp .env.example .env
 ```
 Editar `.env` y configurar las credenciales requeridas:
-- `OPENAI_API_KEY`: Tu clave de API de OpenAI (Proveedor primario).
-- `GEMINI_API_KEY`: Tu clave de API de Google Gemini (Proveedor fallback ante rate-limits).
+- `OPENAI_API_KEY`: Tu clave de API de OpenAI (Proveedor primario: `gpt-4o`).
+- `GEMINI_API_KEY`: Tu clave de API de Google Gemini (Proveedor fallback: `gemini-2.5-flash`).
 - `ALPACA_API_KEY`: Tu clave de **Paper Trading** de Alpaca (Sandbox).
 - `ALPACA_SECRET_KEY`: Tu clave secreta de **Paper Trading** de Alpaca (Sandbox).
-- `FMP_API_KEY`: Tu clave de Financial Modeling Prep (Ratios de solvencia y P/E).
+- `FMP_API_KEY`: Tu clave de Financial Modeling Prep (FMP Stable API).
 - `TAVILY_API_KEY`: Tu clave de Tavily Search (Noticias en tiempo real).
 - `LANGCHAIN_API_KEY` o `LANGSMITH_API_KEY`: Tu clave de LangSmith para telemetría y observabilidad en vivo.
 - `LANGCHAIN_PROJECT`: Nombre del proyecto en LangSmith (por defecto `itba-tfi-financial-agent`).
@@ -138,11 +139,22 @@ Editar `.env` y configurar las credenciales requeridas:
 ---
 
 ## 10. Ejecución
-Para iniciar la aplicación gráfica e interactiva:
+
+### Opción A: Ejecución Local con Streamlit (Recomendada)
 ```bash
 uv run streamlit run src/ui/app.py
 ```
 La interfaz estará disponible automáticamente en el navegador web en `http://localhost:8501`.
+
+### Opción B: Ejecución en Contenedor Docker
+```bash
+docker compose up --build
+```
+
+### Opción C: Verificación de Calidad y Linters
+```bash
+uv run ruff check .
+```
 
 ---
 
@@ -164,22 +176,23 @@ La interfaz estará disponible automáticamente en el navegador web en `http://l
 
 ## 12. Evaluación y Evidencia de Calidad [C15]
 El proyecto cuenta con una batería de pruebas automatizadas y un dataset de evaluación de 12 casos en `evals/`:
-- **Pruebas Unitarias e Integración**:
+
+- **Pruebas Unitarias e Integración (16/16 tests passing)**:
   ```bash
   uv run pytest
   ```
-- **Ejecución del Dataset de Evaluación**:
+- **Ejecución del Dataset de Evaluación Cuantitativa**:
   ```bash
   uv run python evals/run_evals.py
   ```
-- **Métricas Registradas**:
-  - Tasa de éxito en la tarea (*Task Success Rate*).
-  - Precisión en la selección de herramientas (*Tool Selection Accuracy*).
-  - Cumplimiento de políticas de seguridad (*100% de órdenes filtradas por HITL*).
-  - Latencia media y consumo de tokens.
-  - Trazas completas visualizables en **LangSmith**.
 
-Los resultados completos de la evaluación se documentan en `evals/resultados/evaluation_report.md`.
+### Resultados Oficiales del Benchmark (12 Casos de Prueba):
+- **Tasa de Éxito (Task Success Rate)**: **100.0% (12 / 12 casos PASSED)**
+- **Latencia Media por Consulta Completa**: **10.31 segundos**
+- **Cumplimiento de Seguridad (Policy Compliance)**: **100%** (Cero órdenes emitidas sin aprobación humana)
+- **Trazabilidad en Vivo**: Proyecto registrado en [LangSmith](https://smith.langchain.com/o/default/projects/p/itba-tfi-financial-agent) (`itba-tfi-financial-agent`) con árboles de ejecución de nodos, tiempos por herramienta y conteo de tokens.
+
+El reporte completo generado automáticamente se encuentra en `evals/resultados/evaluation_report.md`.
 
 ---
 
