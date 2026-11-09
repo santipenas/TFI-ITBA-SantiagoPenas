@@ -50,27 +50,27 @@ El sistema implementa una arquitectura multiagente orquestada mediante un grafo 
 El proyecto sigue el patrón de **Sistema Multiagente Acotado [ITBA C12]**:
 
 ```mermaid
-graph TD
-    User([Usuario en Streamlit]) -->|Prompt| Supervisor[Supervisor / Orquestador]
+flowchart TD
+    User(["Usuario en Streamlit"]) -->|Prompt| Supervisor["Supervisor / Orquestador"]
     
-    subgraph MultiAgent_Core [Núcleo de Razonamiento Agéntico]
-        Supervisor -->|Delegar| Analyst[Analista de Mercado]
-        Analyst -->|Tools Dinámicas| Tools[yfinance / FMP / Tavily]
+    subgraph MultiAgent_Core ["Núcleo de Razonamiento Agéntico"]
+        Supervisor -->|Delegar| Analyst["Analista de Mercado"]
+        Analyst -->|Tools Dinámicas| Tools["yfinance / FMP / Tavily"]
         Tools --> Analyst
         Analyst -->|Propuesta de Trade| Supervisor
     end
 
-    Supervisor -->|Evaluar| RiskGate[Risk & Policy Gatekeeper]
+    Supervisor -->|Evaluar| RiskGate["Risk & Policy Gatekeeper"]
     
-    subgraph Governance_and_HITL [Capa Determinista y HITL]
-        RiskGate --> RulesEngine[Motor Determinista de Riesgo<br/>Chequeo de Saldo Alpaca y Sizing]
-        RulesEngine -->|Aprobado por Reglas| HITL[PAUSA: interrupt()<br/>Aprobación Humana Obligatoria]
+    subgraph Governance_and_HITL ["Capa Determinista y HITL"]
+        RiskGate --> RulesEngine["Motor Determinista de Riesgo<br/>Chequeo de Saldo Alpaca y Sizing"]
+        RulesEngine -->|Aprobado por Reglas| HITL["PAUSA: interrupt()<br/>Aprobación Humana Obligatoria"]
     end
 
-    HITL -->|Aprobación / Modificación / Rechazo| UserAction{Decisión del Usuario}
-    UserAction -->|Aprobar| BrokerExec[Alpaca Execution Service<br/>Paper Trading Sandbox]
-    UserAction -->|Rechazar| CancelOrder[Cancelación y Registro]
-    BrokerExec --> FinalResponse[Respuesta y Log de Auditoría]
+    HITL -->|Aprobación / Modificación / Rechazo| UserAction{"Decisión del Usuario"}
+    UserAction -->|Aprobar| BrokerExec["Alpaca Execution Service<br/>Paper Trading Sandbox"]
+    UserAction -->|Rechazar| CancelOrder["Cancelación y Registro"]
+    BrokerExec --> FinalResponse["Respuesta y Log de Auditoría"]
 ```
 
 ### Componentes Clave:
