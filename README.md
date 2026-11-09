@@ -51,26 +51,29 @@ El proyecto sigue el patrón de **Sistema Multiagente Acotado [ITBA C12]**:
 
 ```mermaid
 flowchart TD
-    User(["Usuario en Streamlit"]) -->|Prompt| Supervisor["Supervisor / Orquestador"]
-    
-    subgraph MultiAgent_Core ["Núcleo de Razonamiento Agéntico"]
-        Supervisor -->|Delegar| Analyst["Analista de Mercado"]
-        Analyst -->|Tools Dinámicas| Tools["yfinance / FMP / Tavily"]
-        Tools --> Analyst
-        Analyst -->|Propuesta de Trade| Supervisor
+    User(["👤 Usuario (Streamlit UI)"]) -->|1. Prompt / Consulta| Sup["🧭 Supervisor (Orquestador)"]
+
+    subgraph Agente ["Núcleo de Razonamiento Agéntico"]
+        Sup -->|2. Delegar análisis| Analyst["📊 Analista de Mercado"]
+        Analyst <--> Tools[("🛠️ Tools: yfinance · FMP · Tavily")]
     end
 
-    Supervisor -->|Evaluar| RiskGate["Risk & Policy Gatekeeper"]
-    
-    subgraph Governance_and_HITL ["Capa Determinista y HITL"]
-        RiskGate --> RulesEngine["Motor Determinista de Riesgo<br/>Chequeo de Saldo Alpaca y Sizing"]
-        RulesEngine -->|Aprobado por Reglas| HITL["PAUSA: interrupt()<br/>Aprobación Humana Obligatoria"]
+    Analyst -->|Sin trade / Solo consulta| EndInfo(["📄 Informe de Análisis"])
+    Analyst -->|3. Propuesta de Trade| Risk["🛡️ Risk Gatekeeper"]
+    Sup -.->|Consulta directa de saldo/cartera| Risk
+
+    subgraph HITL_Layer ["Capa Determinista y Control Humano (HITL)"]
+        Risk -->|4. Valida Regla 2% y Saldo| Engine{"¿Pasa Riesgo?"}
+        Engine -->|No| RejRisk["❌ Rechazo por Políticas"]
+        Engine -->|Sí| Pause["⏸️ LangGraph interrupt() (Pausa en UI)"]
+        
+        Pause -->|Aprobación Humana| Exec["⚡ Alpaca Paper Trading (Bracket Order)"]
+        Pause -->|Rechazo Humano| Cancel["🛑 Orden Cancelada"]
     end
 
-    HITL -->|Aprobación / Modificación / Rechazo| UserAction{"Decisión del Usuario"}
-    UserAction -->|Aprobar| BrokerExec["Alpaca Execution Service<br/>Paper Trading Sandbox"]
-    UserAction -->|Rechazar| CancelOrder["Cancelación y Registro"]
-    BrokerExec --> FinalResponse["Respuesta y Log de Auditoría"]
+    Exec --> Audit(["✅ Comprobante y Auditoría"])
+    RejRisk --> Audit
+    Cancel --> Audit
 ```
 
 ### Componentes Clave:
