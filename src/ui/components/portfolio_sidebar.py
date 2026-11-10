@@ -51,7 +51,7 @@ def render_portfolio_sidebar():
 
         st.sidebar.caption(f"Poder de Compra: ${account_data.buying_power:,.2f} USD")
 
-        st.sidebar.markdown("##### Posiciones Abiertas")
+        st.sidebar.markdown("##### 📌 Posiciones Abiertas")
         if account_data.open_positions:
             pos_records = []
             for p in account_data.open_positions:
@@ -66,7 +66,52 @@ def render_portfolio_sidebar():
             df_pos = pd.DataFrame(pos_records)
             st.sidebar.dataframe(df_pos, hide_index=True, use_container_width=True)
         else:
-            st.sidebar.write("Sin posiciones abiertas actualmente.")
+            st.sidebar.caption("Sin posiciones abiertas actualmente.")
+
+        st.sidebar.markdown("##### ⏳ Órdenes Pendientes")
+        if account_data.open_orders:
+            order_records = []
+            for o in account_data.open_orders:
+                sl_str = f"${o.stop_loss_price:.2f}" if o.stop_loss_price else "-"
+                tp_str = f"${o.take_profit_price:.2f}" if o.take_profit_price else "-"
+                order_records.append(
+                    {
+                        "Activo": o.symbol,
+                        "Cant.": int(o.qty) if o.qty.is_integer() else o.qty,
+                        "Lado": o.side.upper(),
+                        "Estado": o.status.upper(),
+                        "SL": sl_str,
+                        "TP": tp_str,
+                    }
+                )
+            df_orders = pd.DataFrame(order_records)
+            st.sidebar.dataframe(df_orders, hide_index=True, use_container_width=True)
+            has_pending = any(o.status.lower() in ["accepted", "new", "held"] for o in account_data.open_orders)
+            if has_pending:
+                st.sidebar.info("ℹ️ Órdenes en espera de apertura de mercado de Wall Street.")
+        else:
+            st.sidebar.caption("Sin órdenes pendientes.")
+
+        # 3. Historial de Órdenes Recientes
+        with st.sidebar.expander("📜 Historial de Trades", expanded=False):
+            if account_data.recent_orders:
+                hist_records = []
+                for o in account_data.recent_orders:
+                    date_short = o.submitted_at[:16].replace("T", " ") if o.submitted_at else "-"
+                    price_val = f"${o.filled_avg_price:.2f}" if o.filled_avg_price else "-"
+                    hist_records.append(
+                        {
+                            "Fecha": date_short,
+                            "Activo": o.symbol,
+                            "Operación": f"{o.side.upper()} {int(o.qty) if o.qty.is_integer() else o.qty}",
+                            "Estado": o.status.upper(),
+                            "Precio": price_val,
+                        }
+                    )
+                df_hist = pd.DataFrame(hist_records)
+                st.dataframe(df_hist, hide_index=True, use_container_width=True)
+            else:
+                st.caption("Sin operaciones registradas.")
 
     st.sidebar.markdown("---")
     st.sidebar.caption("📌 **ITBA TFI 2026** · AI Agent Developer")

@@ -139,3 +139,49 @@ def test_get_account_and_positions_mocked():
         assert res.cash == 85000.0
         assert len(res.open_positions) == 1
         assert res.open_positions[0].symbol == "AAPL"
+
+
+def test_get_account_and_positions_with_orders():
+    """Verifica el parseo de órdenes pendientes y bracket legs."""
+    mock_acc = MagicMock()
+    mock_acc.equity = "100000.00"
+    mock_acc.cash = "85000.00"
+    mock_acc.buying_power = "170000.00"
+    mock_acc.portfolio_value = "100000.00"
+    mock_acc.trading_blocked = False
+
+    mock_leg_sl = MagicMock()
+    mock_leg_sl.order_type.value = "stop"
+    mock_leg_sl.stop_price = "115.00"
+
+    mock_leg_tp = MagicMock()
+    mock_leg_tp.order_type.value = "limit"
+    mock_leg_tp.limit_price = "130.00"
+
+    mock_order = MagicMock()
+    mock_order.id = "ord-123"
+    mock_order.client_order_id = "itba_nvda_123"
+    mock_order.symbol = "NVDA"
+    mock_order.qty = "50"
+    mock_order.side.value = "buy"
+    mock_order.order_type.value = "market"
+    mock_order.status.value = "accepted"
+    mock_order.submitted_at = None
+    mock_order.filled_at = None
+    mock_order.filled_avg_price = None
+    mock_order.limit_price = None
+    mock_order.legs = [mock_leg_sl, mock_leg_tp]
+
+    with patch("src.tools.alpaca_broker.get_alpaca_trading_client") as mock_get_client:
+        mock_client = MagicMock()
+        mock_client.get_account.return_value = mock_acc
+        mock_client.get_all_positions.return_value = []
+        mock_client.get_orders.side_effect = [[mock_order], [mock_order]]
+        mock_get_client.return_value = mock_client
+
+        res = get_account_and_positions()
+        assert isinstance(res, AccountSummary)
+        assert len(res.open_orders) == 1
+        assert res.open_orders[0].symbol == "NVDA"
+        assert res.open_orders[0].stop_loss_price == 115.0
+        assert res.open_orders[0].take_profit_price == 130.0

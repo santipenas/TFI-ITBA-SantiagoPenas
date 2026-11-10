@@ -92,6 +92,24 @@ class PositionItem(BaseModel):
     unrealized_plpc: float
 
 
+class OrderItem(BaseModel):
+    """Detalle de una orden de trading en Alpaca (abierta o histórica)."""
+
+    id: str
+    client_order_id: str | None = None
+    symbol: str
+    qty: float
+    side: Literal["buy", "sell"]
+    order_type: str
+    status: str
+    submitted_at: str | None = None
+    filled_at: str | None = None
+    filled_avg_price: float | None = None
+    limit_price: float | None = None
+    stop_loss_price: float | None = None
+    take_profit_price: float | None = None
+
+
 class AccountSummary(BaseModel):
     """Resumen de la cuenta de trading (Alpaca Paper)."""
 
@@ -100,6 +118,8 @@ class AccountSummary(BaseModel):
     buying_power: float
     portfolio_value: float
     open_positions: list[PositionItem]
+    open_orders: list[OrderItem] = Field(default_factory=list)
+    recent_orders: list[OrderItem] = Field(default_factory=list)
     is_trading_blocked: bool = False
     provenance: DataProvenance
 

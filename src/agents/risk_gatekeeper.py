@@ -28,7 +28,7 @@ def risk_gatekeeper_node(state: AgentState) -> dict:
             msg = f"⚠️ No se pudo conectar con Alpaca Paper Trading: {account_obs.message}"
         else:
             acc: AccountSummary = account_obs
-            pos_text = "Sin posiciones abiertas actualmente."
+            pos_text = "_Sin posiciones abiertas actualmente._"
             if acc.open_positions:
                 pos_lines = [
                     f"- **{p.symbol}**: {p.qty} acciones ({p.side.upper()}) a ${p.current_price:.2f} (P/L no realizado: ${p.unrealized_pl:,.2f})"
@@ -36,12 +36,39 @@ def risk_gatekeeper_node(state: AgentState) -> dict:
                 ]
                 pos_text = "\n".join(pos_lines)
 
+            # Formateo de Órdenes Pendientes
+            orders_text = "_Sin órdenes pendientes actualmente._"
+            if acc.open_orders:
+                ord_lines = []
+                for o in acc.open_orders:
+                    sl_str = f" | SL: ${o.stop_loss_price:.2f}" if o.stop_loss_price else ""
+                    tp_str = f" | TP: ${o.take_profit_price:.2f}" if o.take_profit_price else ""
+                    status_badge = "⏳ EN ESPERA (ACCEPTED)" if o.status.lower() in ["accepted", "new", "held"] else f"`{o.status.upper()}`"
+                    ord_lines.append(
+                        f"- **{o.symbol}**: {o.qty} acciones **{o.side.upper()}** ({o.order_type.upper()}) – {status_badge}{sl_str}{tp_str}"
+                    )
+                orders_text = "\n".join(ord_lines)
+
+            # Formateo de Historial Reciente (últimas 5 órdenes)
+            hist_text = "_Sin historial reciente de operaciones._"
+            if acc.recent_orders:
+                hist_lines = []
+                for o in acc.recent_orders[:5]:
+                    date_str = o.submitted_at[:16].replace("T", " ") if o.submitted_at else "Reciente"
+                    price_str = f" a ${o.filled_avg_price:.2f}" if o.filled_avg_price else ""
+                    hist_lines.append(
+                        f"- `{date_str}`: **{o.side.upper()} {o.qty} {o.symbol}**{price_str} – Estado: `{o.status.upper()}`"
+                    )
+                hist_text = "\n".join(hist_lines)
+
             msg = (
                 f"💼 **Estado Actual de tu Cartera (Alpaca Paper Trading)**:\n\n"
                 f"- **Capital Total (Equity)**: `${acc.equity:,.2f} USD`\n"
                 f"- **Efectivo Disponible (Cash)**: `${acc.cash:,.2f} USD`\n"
                 f"- **Poder de Compra**: `${acc.buying_power:,.2f} USD`\n\n"
-                f"**Posiciones Abiertas**:\n{pos_text}"
+                f"📌 **Posiciones Abiertas**:\n{pos_text}\n\n"
+                f"⏳ **Órdenes Pendientes / Activas**:\n{orders_text}\n\n"
+                f"📜 **Historial de Operaciones Recientes**:\n{hist_text}"
             )
         return {
             "messages": [AIMessage(content=msg)],
