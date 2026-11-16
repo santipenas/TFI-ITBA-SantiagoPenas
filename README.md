@@ -43,6 +43,7 @@ El sistema implementa una arquitectura multiagente orquestada mediante un grafo 
 4. **Formulación de Hipótesis y Control de Riesgo**: Si detecta un setup favorable, genera un borrador de propuesta de trade con Stop-Loss y Take-Profit. El **Risk Gatekeeper** evalúa deterministamente la orden contra el saldo de la cuenta de Alpaca y aplica las reglas de gestión de riesgo (riesgo máximo del 2% del capital, exposición máxima del 10%).
 5. **Compuerta Human-in-the-Loop (HITL)**: El grafo se pausa obligatoriamente mediante `interrupt()`. La interfaz presenta la orden estructurada al usuario, quien puede **aprobarla, modificar sus parámetros o rechazarla**.
 6. **Ejecución Supervisada**: Al recibir la aprobación humana, el **Servicio de Ejecución** envía la orden bracket a la API de **Paper Trading de Alpaca** y retorna el comprobante de auditoría.
+7. **Monitoreo y Auditoría Continua**: El usuario puede consultar en todo momento el capital actualizado, posiciones abiertas, órdenes pendientes (con sus niveles de Stop-Loss y Take-Profit activos) y el historial de trades ejecutados, tanto desde el panel lateral como preguntándole en lenguaje natural al asistente en el chat.
 
 ---
 
@@ -83,7 +84,7 @@ flowchart TD
   - `risk-management-framework`: Fórmulas matemáticas de dimensionamiento de posición, regla del 2% de riesgo y concentración máxima.
 - **Estado y Memoria [C10-C11]**: `SqliteSaver` de LangGraph (`data/checkpoints.db`) para persistencia durable de hilos de sesión y puntos de pausa HITL. Tabla local SQLite para perfiles y preferencias del usuario (`data/user_profile.db`).
 - **Integraciones Externas [C9/C13]**:
-  - **Alpaca Markets**: Conexión a la API de Paper Trading para consulta de saldo, posiciones y envío de órdenes bracket.
+  - **Alpaca Markets**: Conexión bidireccional a la API de Paper Trading para consulta de saldo, posiciones abiertas, seguimiento de órdenes pendientes (con soporte para horarios fuera de rueda y legs de Stop-Loss/Take-Profit), historial de operaciones y envío de órdenes bracket deterministas.
   - **Financial Modeling Prep (FMP Stable API)**: Extracción en vivo de ratios de solvencia, múltiplos de valuación (P/E, PEG, P/B, Debt-to-Equity), márgenes operativos y netos, crecimiento YoY, beta, precio objetivo de consenso de Wall Street y valor intrínseco por DCF (Discounted Cash Flow).
   - **Tavily AI**: Búsqueda contextual de noticias de mercado y catalizadores depurados para LLMs.
   - **LangSmith**: Telemetría, árboles de ejecución jerárquicos y observabilidad agéntica en tiempo real.
@@ -174,13 +175,15 @@ uv run ruff check .
    - Stop-Loss y Take-Profit sugeridos.
 6. El usuario hace clic en **"Aprobar Orden"**.
 7. El sistema ejecuta la orden bracket en Alpaca Paper Trading y muestra el ID de comprobante oficial emitido por el broker.
+8. En el panel lateral, el estado de la cuenta se actualiza en tiempo real: si la rueda está abierta, se incorpora a **Posiciones Abiertas**; si el mercado está cerrado, se visualiza en **Órdenes Pendientes** (`ACCEPTED`) junto con sus precios de SL y TP hasta la apertura de sesión. Todas las órdenes quedan auditadas en el **Historial de Trades**.
+9. En cualquier momento posterior, el usuario puede preguntarle al agente por chat: *"¿Qué órdenes tengo pendientes?"* o *"¿Cuál es mi historial de operaciones?"* para obtener un resumen inmediato.
 
 ---
 
 ## 12. Evaluación y Evidencia de Calidad [C15]
 El proyecto cuenta con una batería de pruebas automatizadas y un dataset de evaluación de 12 casos en `evals/`:
 
-- **Pruebas Unitarias e Integración (16/16 tests passing)**:
+- **Pruebas Unitarias e Integración (17/17 tests passing)**:
   ```bash
   uv run pytest
   ```
